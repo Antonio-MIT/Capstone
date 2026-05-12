@@ -1,16 +1,28 @@
 from skyfield.api import load, wgs84, Star
-from datetime import timedelta
 import numpy as np
+import os
+
+print("Tracker.py loaded from:", os.path.abspath(__file__))
 
 class TrackingEngine:
     def __init__(self, latitude, longitude, elevation_m=0):
         self.ts = load.timescale()
-        self.ephemeris = load('de421.bsp')  # JPL ephemeris
+        self.ephemeris = load('de421.bsp')
+
+        # Skyfield expects degrees here — this produces a GeographicPosition
         self.location = wgs84.latlon(latitude, longitude, elevation_m)
+
+        print("DEBUG: type(self.location) =", type(self.location))
 
     def compute_altaz(self, ra_hours, dec_degrees, time):
         target = Star(ra_hours=ra_hours, dec_degrees=dec_degrees)
-        astrometric = self.location.at(time).observe(target)
+
+        # CRITICAL: Convert GeographicPosition → Topos by adding Earth
+        observer = self.ephemeris['earth'] + self.location
+
+        # Now .at(time) returns a ToposPosition, which supports .observe()
+        astrometric = observer.at(time).observe(target)
+
         alt, az, distance = astrometric.apparent().altaz()
         return alt.degrees, az.degrees
 
@@ -33,26 +45,27 @@ class TrackingEngine:
             "duration_minutes": 0
         }
 
-        # Detect enter
+        # Enter
         for i in range(1, len(inside)):
             if inside[i] and not inside[i-1]:
                 events["enter"] = times[i].utc_iso()
                 break
 
-        # Detect exit
+        # Exit
         for i in range(1, len(inside)):
             if not inside[i] and inside[i-1]:
                 events["exit"] = times[i].utc_iso()
                 break
 
-        # Detect transit (max altitude)
+        # Transit (max altitude)
         max_idx = np.argmax(alt_array)
         events["transit"] = times[max_idx].utc_iso()
 
-        # Duration
+        # Duration (simple placeholder)
         if events["enter"] and events["exit"]:
-            t1 = times[max_idx]
-            t2 = times[max_idx]
-            events["duration_minutes"] = int((times[max_idx] - times[0]).seconds / 60)
+            dt1=times[max_idx].utc_datetime()
+            dt0=times[0].utc_datetime()
+            delta = dt1-dt0
+            events["duration_minutes"] = int(delta.total_seconds() / 60)
 
         return events

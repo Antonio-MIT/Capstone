@@ -60,6 +60,10 @@ class TrackingPanel(QWidget):
             dec = float(self.dec_input.text())
             beam = float(self.beam_input.text())
 
+            print("RA input=",ra)
+            print("Dec input=",dec)
+            print("Beam input=",beam)
+
             print("2) Parsed inputs:", ra, dec, beam)  # DEBUG
 
             result = self.engine.sweep_day(
