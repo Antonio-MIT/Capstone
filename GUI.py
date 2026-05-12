@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QStatusBar
 )
 from PySide6.QtCore import Qt
-
+from TrackerUI import TrackingPanel
 
 class MainWindow(QMainWindow):
     def __init__(self):
