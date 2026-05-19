@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QWidget
-from TrackerUI import TrackingPanel
+from UI.TrackerUI import TrackingPanel
+from ENGINE.Tracker import TrackingEngine
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
